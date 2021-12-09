@@ -60,10 +60,6 @@ public class Main {
                     props.getProperty("twitter.api.key.secret"),
                     props.getProperty("twitter.api.access_token"),
                     props.getProperty("twitter.api.acces_token.secret"),
-                    //"Y7y1UGfh0wSgrParLb5w9iOyu",
-                    //"wORNZwKf2nwbkHvUzBsQCRFNc80n61KuFPhEk9vXCPosaTAkn2",
-                    //"1465975575097581569-N0ayCpeIuOE05UBCqWtOZiRlsjoBQK",
-                    //"h1kAugzCbx4HCFe6S0xFQisXfTLQ2fYbAAqa4GHVrCE7i",
                     hashtagsToFollow,
                     kafkaProducer
             );
