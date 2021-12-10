@@ -1,12 +1,8 @@
 package fr.edu.ece;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.edu.ece.kafka_producer.KafkaProducer;
-import fr.edu.ece.kafka_producer.SendToKafkaTask;
 import fr.edu.ece.twitter_consumer.TwitterConsumer;
-import io.github.redouane59.twitter.TwitterClient;
-import io.github.redouane59.twitter.dto.rules.FilteredStreamRulePredicate;
-import io.github.redouane59.twitter.signature.TwitterCredentials;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,18 +10,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Properties;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class.getName());
     private static Properties props = new Properties();
     private static TwitterConsumer tc;
-    private static KafkaProducer kafkaProducer;
     private static BlockingQueue<Runnable> queue;
 
     private Main() {
@@ -45,33 +37,22 @@ public class Main {
             props.load(input);
 
             queue = new LinkedBlockingQueue<>();
-            kafkaProducer = new KafkaProducer(
-                    Integer.parseInt(props.getProperty("kafka.producer.threadpool.corePoolSize")),
-                    Integer.parseInt(props.getProperty("kafka.producer.threadpool.maximumPoolSize")),
-                    Integer.parseInt(props.getProperty("kafka.producer.keep_alive_time")),
-                    queue
-            );
+            Properties kafkaProps = new Properties();
+            kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, props.getProperty("kafka.producer.bootstrap-server"));
+            kafkaProps.put(ProducerConfig.CLIENT_ID_CONFIG, "twitterKafkaProducer");
+            kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+            kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
             LOGGER.info("Creating twitter client...");
-            String [] hashtagsToFollow = props.getProperty("twitter.api.hashtags_to_follow").split("\\|");
             tc = new TwitterConsumer(
-
-                    props.getProperty("twitter.api.key"),
-                    props.getProperty("twitter.api.key.secret"),
-                    props.getProperty("twitter.api.access_token"),
-                    props.getProperty("twitter.api.acces_token.secret"),
-                    //"Y7y1UGfh0wSgrParLb5w9iOyu",
-                    //"wORNZwKf2nwbkHvUzBsQCRFNc80n61KuFPhEk9vXCPosaTAkn2",
-                    //"1465975575097581569-N0ayCpeIuOE05UBCqWtOZiRlsjoBQK",
-                    //"h1kAugzCbx4HCFe6S0xFQisXfTLQ2fYbAAqa4GHVrCE7i",
-                    hashtagsToFollow,
-                    kafkaProducer
+                    props,
+                    kafkaProps
             );
             tc.init();
             tc.start();
 
         } catch (IOException ex) {
-            LOGGER.error("Couldn't read twitter-api-configuration.properties, exiting.");
+            LOGGER.error("Couldn't read twitter-kafka-producer-configuration.properties, exiting.");
             LOGGER.error("", ex);
             System.exit(1);
         } catch (Exception e) {

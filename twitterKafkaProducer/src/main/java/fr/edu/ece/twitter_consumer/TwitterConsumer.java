@@ -1,36 +1,53 @@
 package fr.edu.ece.twitter_consumer;
 
 import com.github.scribejava.core.model.Response;
-import fr.edu.ece.kafka_producer.KafkaProducer;
-import fr.edu.ece.kafka_producer.SendToKafkaTask;
 import io.github.redouane59.twitter.TwitterClient;
 import io.github.redouane59.twitter.dto.rules.FilteredStreamRulePredicate;
 import io.github.redouane59.twitter.signature.TwitterCredentials;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Properties;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class TwitterConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(TwitterConsumer.class.getClass());
+    private final String TOPIC;
+
     private TwitterClient client;
     private String [] hashtagsToFollow;
     private ArrayList<FilteredStreamRulePredicate> rules;
     private Future<Response> stream;
-    private KafkaProducer kafkaProducer;
+    private Producer<String, String> producer;
+    private ThreadPoolExecutor executor;
 
-    public TwitterConsumer(String apiKey, String apiKeySecret, String apiToken, String apiTokenSecret, String [] hashtagsToFollow, KafkaProducer producer) {
-        LOGGER.info("Api: apiKey: {}, apiKeySecret: {}, apiToken: {}, apiTokenSecret: {}", apiKey, apiKeySecret, apiToken, apiTokenSecret);
+
+    public TwitterConsumer(Properties props, Properties kafkaProps) {
         client = new TwitterClient(TwitterCredentials.builder()
-                .apiKey(apiKey)
-                .apiSecretKey(apiKeySecret)
-                .accessToken(apiToken)
-                .accessTokenSecret(apiTokenSecret)
+                .apiKey(props.getProperty("twitter.api.key"))
+                .apiSecretKey(props.getProperty("twitter.api.key.secret"))
+                .accessToken(props.getProperty("twitter.api.access_token"))
+                .accessTokenSecret(props.getProperty("twitter.api.acces_token.secret"))
                 .build());
-        this.hashtagsToFollow = hashtagsToFollow.clone();
+        this.executor = new ThreadPoolExecutor(
+                Integer.parseInt(props.getProperty("kafka.producer.threadpool.corePoolSize")),
+                Integer.parseInt(props.getProperty("kafka.producer.threadpool.maximumPoolSize")),
+                Integer.parseInt(props.getProperty("kafka.producer.keep_alive_time")),
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>()
+        );
+        this.hashtagsToFollow = props.getProperty("twitter.api.hashtags_to_follow").split("\\|");
+
+
+        this.producer = new KafkaProducer<>(kafkaProps);
         this.rules = new ArrayList<>();
-        this.kafkaProducer = producer;
+        this.TOPIC = props.getProperty("kafka.producer.topic");
     }
 
     public void init() throws IllegalArgumentException {
@@ -65,10 +82,10 @@ public class TwitterConsumer {
     public void start () {
         if (stream == null) {
             stream = client.startFilteredStream((tweet) -> {
-                kafkaProducer.sendToKafka(new SendToKafkaTask(tweet));
+                executor.execute(new SendTweetToKafkaTask(tweet, hashtagsToFollow, TOPIC, producer));
             });
         } else {
-            LOGGER.warn("TwitterConsumer.start() got called but consumer was alredy started !! - Nothing was done");
+            LOGGER.warn("TwitterConsumer.start() got called but consumer was already started !! - Nothing was done");
         }
 
     }
@@ -77,7 +94,7 @@ public class TwitterConsumer {
         if (stream != null) {
             client.stopFilteredStream(stream);
             for (FilteredStreamRulePredicate rule : rules) {
-                LOGGER.error("Removing rule from filtered stream {}",rule);
+                LOGGER.error("Removing rule from filtered stream {}", rule);
                 client.deleteFilteredStreamRule(rule);
             }
             rules.clear();
