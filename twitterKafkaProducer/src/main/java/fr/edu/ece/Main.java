@@ -38,7 +38,7 @@ public class Main {
 
             queue = new LinkedBlockingQueue<>();
             Properties kafkaProps = new Properties();
-            kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, props.getProperty("kafka.producer.bootstrap-server"));
+            kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, props.getProperty("kafka.bootstrap-server"));
             kafkaProps.put(ProducerConfig.CLIENT_ID_CONFIG, "twitterKafkaProducer");
             kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
             kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());

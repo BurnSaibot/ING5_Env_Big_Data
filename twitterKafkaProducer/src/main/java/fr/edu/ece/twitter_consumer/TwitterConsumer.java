@@ -47,7 +47,7 @@ public class TwitterConsumer {
 
         this.producer = new KafkaProducer<>(kafkaProps);
         this.rules = new ArrayList<>();
-        this.TOPIC = props.getProperty("kafka.producer.topic");
+        this.TOPIC = props.getProperty("kafka.topic");
     }
 
     public void init() throws IllegalArgumentException {
