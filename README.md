@@ -27,7 +27,7 @@ Malheureuseent pour le moment, lors des tests réalisés sur mon cluster mono ma
 - Problème avec l'accès au cluster, le dns semble mort et il semblerait qu'un groupe d'élève ait été mis au courant de ce problème avec une solution de contournement, mais que ce groupe ne l'ait pas communiqué aux autres élèves. J'ai donc travaillé à partir de mon propre "cluster" monomachine sur ma machine de dev, et ait finalement passer plus de temps à essayer de tout configurer pour que chaque service puisse fonctionner correctement qu'à avancer dans mon dévoleppement.
 - Ma santé.
 
-# Améliorations possibls
+# Améliorations possibles
 - Faire en sorte que le consumer fonctionne normalement, ajouter l'analyse de sentiment
 - Améliorer l'installation, j'avais dans l'idée de créer un projet parent en utilisant maven et de créer un rpm permettant d'installer le consumer, le producer ou les deux sur un noeud donné
 - Ajouter la sécurité, que vous m'avez demander de laisser tomber après vous être rendu compte que le service kafka était inutilisable sur le cluster (j'avais commencé à travailler là dessus en utilisant JAAS, visible dans une autre branche du projet)
