@@ -13,9 +13,7 @@ Pour l'installation, il faut commencer par cloner ce repo git, puis enssuite cop
 Là un des premiers problèmes risque d'apparaitre : les jar utilisés pour communiquer avec les brokers kafka ainsi que ceux pour réaliser le streaming spark sont fortement liés aux versions de spark et kafka utilisées. 
 De plus, n'ayant pas accès au cluster ave clequel j'étais sensé réalisé le projet suite à un problème de DNS, j'ai travaillé sur un cluster monomachine sur ma machine de dev, il est donc possible que ces versions ne soient pas les bonnes pour travailler avec votre cluster.
 Il faudra potentiellement donc mettre à jour les deux fichier pom.xml dans les deux projets avant de les compiler en utilisant la commande
-'mvn clean compile assembly:single' à la racine des deux projets (consumers et producers)
-
-une fois compilés, pour pouvoir utiliser les différents projets on doit alors mettre le fichier de configuration à jour sur chacun des noeuds.
+``mvn clean compile assembly:single`` à la racine des deux projets (consumers et producers), une fois compilés, pour pouvoir utiliser les différents projets on doit alors mettre le fichier de configuration à jour sur chacun des noeuds.
 
 Le producer est malheureusement difficilement parallélisable, on peut l'utiliser à partir de plusieurs noeuds du cluster avec une configuration différentes pour suivres différents #, mais le parallélisme s'arrête ici. Il est possible de suivre différents # sur un même noeud (expliqué dans les commentaires du fichier de configuration).
 
